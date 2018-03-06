@@ -1,23 +1,23 @@
 # AEM & Docker getting started guide
 
-Getting started guide for [Adobe Experience Manager](https://www.adobe.com/nl/marketing-cloud/experience-manager.html) together with Docker.
+Getting started guide for development with [Adobe Experience Manager](https://www.adobe.com/nl/marketing-cloud/experience-manager.html) together with Docker. The configuration contains an AEM author, publisher and dispatcher environment, running in three separate containers.
 
 ## Prerequisites
 
 This tutorial assumes running on a Mac. Installation on Windows might differ for certain steps. The following items are required:
 
-- Docker
+- [Docker](https://www.docker.com) with at least 8GB memory allocated
 - AEM installation file, named `AEM_6.3_Quickstart.jar`
 - AEM license file, named `license.properties`
 - Recommended: [Homebrew](https://brew.sh) package manager
 
 ## Getting started: running AEM
 
-1. Clone this repository to a local directory together with the AEM installation file and license file.
-2. Build the Docker image with `docker build -t aem-demo .`
-3. Start the Docker container with `docker run --name aem-demo -p 4502:4502 -d --mount type=bind,source="$(pwd)"/logs,target=/opt/cq/crx-quickstart/logs aem-demo`. This will also mount the `./logs` directory on your local system, so you have easy access to the AEM logs.
-4. Wait until AEM has fully started. To check, open the [bundles JSON page](http://localhost:4502/system/console/bundles.1.json) and when the total number of bundles is equal to the active bundles, AEM has fully started.
-5. Navigate to [http://localhost:4502](http://localhost:4502) and you'll see a login screen. Login with username `admin` and password `admin`.
+1. Clone this repository to a local directory and put the AEM installation file and license file in the root.
+2. Build the Docker images with `docker-compose build`.
+3. Start the Docker containers with `docker-compose up`. This will also mount the `./logs` directory on your local system to the containers, so you have easy access to the logs of all containers.
+4. Wait until AEM has fully started. To check for the author, open the [bundles JSON page](http://localhost:4502/system/console/bundles.1.json) and when the total number of bundles is equal to the active bundles, the AEM environment has fully started.
+5. Navigate to [http://localhost:4502](http://localhost:4502) and you'll see a login screen. Login with username `admin` and password `admin`. Navigate to [http://localhost](http://localhost) to see the published site via the dispatcher.
 
 ## Getting started: set-up development environment
 
