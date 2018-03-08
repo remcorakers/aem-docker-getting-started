@@ -4,7 +4,7 @@ services:
     container_name: aem_author
     build:
       context: ./
-      dockerfile: author/author.dockerfile
+      dockerfile: author/dockerfile
     hostname: 'author'
     ports:
       - '4502:4502'
@@ -14,7 +14,7 @@ services:
     container_name: aem_publisher
     build:
       context: ./
-      dockerfile: publisher/publisher.dockerfile
+      dockerfile: publisher/dockerfile
     hostname: 'publisher'
     ports:
       - '4503:4503'
@@ -26,7 +26,6 @@ services:
     container_name: aem_dispatcher
     build:
       context: ./dispatcher
-      dockerfile: dispatcher.dockerfile
     hostname: 'dispatcher'
     ports:
       - '80:80'

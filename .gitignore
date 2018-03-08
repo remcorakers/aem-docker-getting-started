@@ -1,4 +1,5 @@
+license.properties
 logs/*
 *.jar
-license.properties
+*.zip
 .DS_Store
