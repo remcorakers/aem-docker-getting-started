@@ -14,7 +14,7 @@ This tutorial assumes running on a Mac. Installation on Windows might differ for
 ## Getting started: running AEM
 
 1. Clone this repository to a local directory and put the AEM installation file and license file in the root.
-2. Put AEM packages that need to be installed during build in `./author/packages/` and `./publisher/packages/`.
+2. Put AEM packages that need to be installed during build in `./author/packages/` and `./publisher/packages/`. Order of installation will be alphabetically, based on package file name.
 3. Build the Docker images with `docker build -t aem-base -f base/Dockerfile . && docker-compose build`. This takes a couple of minutes, as the author and publisher are started during build to be able to install packages.
 4. Start the Docker containers with `docker-compose up`. This will also mount the `./logs` directory on your local system to the containers, so you have easy access to the logs of all containers.
 5. Wait until AEM has fully started. To check for the author, open the [bundles JSON page](http://localhost:4502/system/console/bundles.1.json) and when the total number of bundles is equal to the active bundles, the AEM environment has fully started.

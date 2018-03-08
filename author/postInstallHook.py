@@ -9,7 +9,51 @@ password = "admin:admin"
 c = pycurl.Curl()
 c.setopt(c.URL, baseUrl + "/etc/replication/agents.author/publish/jcr:content")
 c.setopt(pycurl.USERPWD, password)
-post_data = {"./sling:resourceType":"cq/replication/components/agent","./jcr:lastModified":"","./jcr:lastModifiedBy":"","_charset_":"utf-8",":status":"browser","./jcr:title":"Default Agent","./jcr:description":"Agent that replicates to the default publish instance.","./enabled":"true","./enabled@Delete":"","./serializationType":"durbo","./retryDelay":"60000","./userId":"","./logLevel":"info","./reverseReplication@Delete":"","./transportUri":"http://publish:4503/bin/receive?sling:authRequestLogin=1","./transportUser":"admin","./transportPassword":"admin","./transportNTLMDomain":"","./transportNTLMHost":"","./ssl":"","./protocolHTTPExpired@Delete":"","./proxyHost":"","./proxyPort":"","./proxyUser":"","./proxyPassword":"","./proxyNTLMDomain":"","./proxyNTLMHost":"","./protocolInterface":"","./protocolHTTPMethod":"","./protocolHTTPHeaders@Delete":"","./protocolHTTPConnectionClose@Delete":"true","./protocolConnectTimeout":"","./protocolSocketTimeout":"","./protocolVersion":"","./triggerSpecific@Delete":"","./triggerModified@Delete":"","./triggerDistribute@Delete":"","./triggerOnOffTime@Delete":"","./triggerReceive@Delete":"","./noStatusUpdate@Delete":"","./noVersioning@Delete":"","./queueBatchMode@Delete":"","./queueBatchWaitTime":"","./queueBatchMaxSize":""}
+post_data = {
+  "./sling:resourceType":"cq/replication/components/agent",
+  "./jcr:lastModified":"",
+  "./jcr:lastModifiedBy":"",
+  "_charset_":"utf-8",
+  ":status":"browser",
+  "./jcr:title":"Default Agent",
+  "./jcr:description":"Agent that replicates to the default publish instance.",
+  "./enabled":"true",
+  "./enabled@Delete":"",
+  "./serializationType":"durbo",
+  "./retryDelay":"60000",
+  "./userId":"",
+  "./logLevel":"info",
+  "./reverseReplication@Delete":"",
+  "./transportUri":"http://publisher:4503/bin/receive?sling:authRequestLogin=1",
+  "./transportUser":"admin",
+  "./transportPassword":"admin",
+  "./transportNTLMDomain":"",
+  "./transportNTLMHost":"",
+  "./ssl":"",
+  "./protocolHTTPExpired@Delete":"",
+  "./proxyHost":"",
+  "./proxyPort":"",
+  "./proxyUser":"",
+  "./proxyPassword":"",
+  "./proxyNTLMDomain":"",
+  "./proxyNTLMHost":"",
+  "./protocolInterface":"",
+  "./protocolHTTPMethod":"",
+  "./protocolHTTPHeaders@Delete":"",
+  "./protocolHTTPConnectionClose@Delete":"true",
+  "./protocolConnectTimeout":"",
+  "./protocolSocketTimeout":"",
+  "./protocolVersion":"",
+  "./triggerSpecific@Delete":"",
+  "./triggerModified@Delete":"",
+  "./triggerDistribute@Delete":"",
+  "./triggerOnOffTime@Delete":"",
+  "./triggerReceive@Delete":"",
+  "./noStatusUpdate@Delete":"",
+  "./noVersioning@Delete":"",
+  "./queueBatchMode@Delete":"",
+  "./queueBatchWaitTime":"",
+  "./queueBatchMaxSize":""}
 
 # Form data must be provided already urlencoded.
 postfields = urlencode(post_data)

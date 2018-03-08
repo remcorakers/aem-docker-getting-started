@@ -1,11 +1,11 @@
 FROM aem-base
 
-WORKDIR /opt/cq
+WORKDIR /opt/aem
 
-ADD ./publisher/postInstallHook.py /opt/cq/postInstallHook.py
-ADD ./publisher/packages/*.zip /opt/cq/packages/
+COPY ./publisher/postInstallHook.py /opt/aem/postInstallHook.py
+COPY ./publisher/packages/* /opt/aem/packages/
 
 RUN python aemInstaller.py -i AEM_6.3_Quickstart.jar -r publish -p 4503
 
 EXPOSE 4503
-CMD /opt/cq/crx-quickstart/bin/quickstart
+CMD java -Xms4096m -Xmx4096m -Djava.awt.headless=true -jar AEM_6.3_Quickstart.jar -p 4503 -debug 30304 -r publish -v

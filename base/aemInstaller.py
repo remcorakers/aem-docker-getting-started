@@ -23,14 +23,11 @@ fileName = optDic.setdefault('filename', 'cq-publish-4503.jar')
 runmode = optDic.setdefault('runmode', 'publish')
 port = optDic.setdefault('port', '4503')
 
-#
 # Waits for connection on LISTENER_PORT, and then checks that the returned
 # success message has been recieved.
-#
-# Starts AEM installer
 LISTENER_PORT = 50007
-installProcess = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-jar', fileName, 
-  '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port])
+installProcess = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-Djava.awt.headless=true', 
+  '-jar', fileName, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port])
 
 # Starting listener
 import socket
@@ -45,20 +42,15 @@ strResult = ""
 while 1:
   data = conn.recv(1024)
   if not data:
-    #print "doing break on socket listen"
     break
   else:
-    #print "data = %s" %(str(data))
     strResult = strResult + str(data).strip()
-    #print "strResult = %s" %(strResult)
     if strResult == 'started':
-      #print "doing break after successfulStart"
       successfulStart = True
       break
-    #conn.sendall(data)
 conn.close()
 
-#Post install hook
+# Post install hook
 postInstallHook = "postInstallHook.py"
 if os.path.isfile(postInstallHook):
   print("Executing post install hook")
@@ -70,10 +62,8 @@ else:
   print("No install hook found")
 
 print("Stopping instance")
-#
-# If the success message was received, attempt to close all associated
-# processes.
-#
+
+# If the success message was received, attempt to close all associated processes.
 if successfulStart == True:
   parentAEMprocess= psutil.Process(installProcess.pid)
   for childProcess in parentAEMprocess.get_children():
