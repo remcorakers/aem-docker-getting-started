@@ -8,7 +8,7 @@ password = "admin:admin"
 # Install packages
 current_dir = os.getcwd()
 print("Current directory " + current_dir)
-for file_name in os.listdir(os.path.join(current_dir, "packages")):
+for file_name in sorted(os.listdir(os.path.join(current_dir, "packages"))):
   if file_name.endswith(".zip"): 
     file_path = os.path.join(current_dir, "packages", file_name)
     print("Starting installation of package @\"" + file_name + "\"")
