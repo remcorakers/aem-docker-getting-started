@@ -78,12 +78,15 @@ c.setopt(c.POSTFIELDS, postfields)
 c.perform()
 c.close()
 agentStatusResponse = agentStatus.getvalue()
+agentStatus.close()
 
 if agentStatusResponse.find('<div id="Status">200</div>') == -1:
   print("Updating replication agent failed:")
   print(agentStatusResponse)
   print("Exiting process...")
   sys.exit(1)
+else:
+  print("Updated Author replication agent")
 
 # Showing Publisher status
 print("Publisher status:")
@@ -95,57 +98,77 @@ c.close()
 
 # Install packages
 current_dir = os.getcwd()
-print("Current directory " + current_dir)
+print("\nCurrent directory " + current_dir)
 for file_name in sorted(os.listdir(os.path.join(current_dir, "packages"))):
-  if file_name.endswith(".zip"): 
-    file_path = os.path.join(current_dir, "packages", file_name)
-    print("Starting installation of package \"" + file_name + "\"")
-    packageUpload = StringIO()
-    c = pycurl.Curl()
-    c.setopt(c.WRITEFUNCTION, packageUpload.write)
-    c.setopt(c.URL, baseUrl + "/crx/packmgr/service.jsp")
-    c.setopt(c.POST, 1)
-    c.setopt(pycurl.USERPWD, password)
-    c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, file_path)), ('force', 'true'), ('install', 'true')])
-    c.perform()
-    c.close()
-    packageUploadResponse = packageUpload.getvalue()
+  if not file_name.endswith(".zip"): 
+    print("File \"" + file_name + "\" is no zip-file")
+    continue
+
+  file_path = os.path.join(current_dir, "packages", file_name)
+  print("Starting installation of package \"" + file_name + "\"")
+  
+  print("Uploading package \"" + file_name + "\"...")
+  uploaded = False
+  while not uploaded:
+    try:
+      packageUpload = StringIO()
+      c = pycurl.Curl()
+      c.setopt(c.WRITEFUNCTION, packageUpload.write)
+      c.setopt(c.URL, baseUrl + "/crx/packmgr/service.jsp")
+      c.setopt(c.POST, 1)
+      c.setopt(pycurl.USERPWD, password)
+      c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, file_path)), ('force', 'true'), ('install', 'true')])
+      c.perform()
+      c.close()
+      packageUploadResponse = packageUpload.getvalue()
+      packageUpload.close()
+    except pycurl.error as error:
+      print("Upload failed. Will retry in 10 seconds...")
+      sleep(10)
+      continue
 
     if packageUploadResponse.find('<status code="200">ok</status>') == -1:
-      print("Error installing package \"" + file_name + "\".")
-      print(packageUploadResponse)
-      print("Exiting process...")
-      sys.exit(1)
+      print("Upload failed. Will retry in 10 seconds...")
+      sleep(10)
     else:
       print("Package \"" + file_name + "\" uploaded")
+      uploaded = True
 
-      installed = False
-      while not installed:
-        print("Waiting for package \"" + file_name + "\" installation...")
+  print("Checking package \"" + file_name + "\" installation...")
+  installed = False
+  while not installed:
+    try:
+      packageInstallation = StringIO()
+      c = pycurl.Curl()
+      c.setopt(c.WRITEFUNCTION, packageInstallation.write)
+      c.setopt(c.URL, baseUrl + "/crx/packmgr/list.jsp")
+      c.setopt(pycurl.USERPWD, password)
+      c.perform()
+      c.close()
+      packageInstallationResponse = packageInstallation.getvalue()
+      packageInstallation.close()
+    except pycurl.error:
+      print("Package not yet installed. Will retry in 10 seconds...")
+      sleep(10)
+      continue
+  
+    if not is_json(packageInstallationResponse):
+      print("Package not yet installed. Will retry in 10 seconds...")
+      sleep(10)
+      continue
+    
+    # Parse packageInstallationResponse as json object and loop through results
+    jsonResponse = json.loads(packageInstallationResponse)
+    for result in jsonResponse["results"]:
+      # TODO: build better support to strip package file name order number
+      download_name = file_name[2:]
+      
+      # break while loop when package status is resolved (i.e. installed)
+      if result["downloadName"] == download_name and result["resolved"] == True:
+        print("Package \"" + file_name + "\" is installed")
+        installed = True
+        break
 
-        packageInstallation = StringIO()
-        c = pycurl.Curl()
-        c.setopt(c.WRITEFUNCTION, packageInstallation.write)
-        c.setopt(c.URL, baseUrl + "/crx/packmgr/list.jsp")
-        c.setopt(pycurl.USERPWD, password)
-        c.perform()
-        c.close()
-        packageInstallationResponse = packageInstallation.getvalue()
-        
-        # Parse packageInstallationResponse as json object and loop through results
-        if is_json(packageInstallationResponse):
-          jsonResponse = json.loads(packageInstallationResponse)
-          for result in jsonResponse["results"]:
-            # TODO: build better support to strip package file name order number
-            download_name = file_name[2:]
-            
-            # break while loop when package status is resolved (i.e. installed)
-            if result["downloadName"] == download_name and result["resolved"] == True:
-              print("Package \"" + file_name + "\" is installed")
-              installed = True
-              sleep(10)
-              break
-
-        sleep(5)
-  else:
-    print("File \"" + file_name + "\" is no zip-file")
+    if not installed:
+      print("Package not yet installed. Will retry in 10 seconds...")
+      sleep(10)
