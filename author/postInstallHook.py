@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import subprocess
+import select
 from urllib import urlencode, quote
 from StringIO import StringIO    
 from time import sleep
@@ -155,11 +156,17 @@ for file_name in sorted(os.listdir(os.path.join(current_dir, "packages"))):
             + 'entity=bundle:updater.aem-service-pkg, state=UNINSTALL, attributes=[Bundle-SymbolicName=updater.aem-service-pkg, Bundle-Version=1.0, ' \
             + 'org.apache.sling.installer.api.tasks.ResourceTransformer'
     f = subprocess.Popen(['tail', '-F', '/opt/aem/crx-quickstart/logs/error.log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = select.poll()
+    p.register(f.stdout)
+
     while True:
-      if f.stdout.readline().find(match) > -1:
-        f.kill()
-        log("Package \"" + file_name + "\" is installed")
-        break
+      if p.poll(1):
+        if f.stdout.readline().find(match) > -1:
+          f.kill()
+          log("Package \"" + file_name + "\" is installed")
+          break
+      sleep(1)
+    
   else:
     installed = False
     while not installed:
