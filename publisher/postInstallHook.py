@@ -67,6 +67,7 @@ for file_name in sorted(os.listdir(os.path.join(current_dir, "packages"))):
   # Workaround for 6.2 SP1 to check installation status.
   # See https://helpx.adobe.com/experience-manager/6-2/release-notes/sp1.html
   if file_name.find('aem-service-pkg-6.2.SP1') > -1:
+    log("Found 6.2 SP1 package. Monitor error.log to wait for package installation to complete...")
     match = 'from resource TaskResource(url=jcrinstall:/libs/system/aem-service-pkg-6.2.SP1/install/1/updater.aem-service-pkg-1.0.0.jar, ' \
             + 'entity=bundle:updater.aem-service-pkg, state=UNINSTALL, attributes=[Bundle-SymbolicName=updater.aem-service-pkg, Bundle-Version=1.0, ' \
             + 'org.apache.sling.installer.api.tasks.ResourceTransformer'
