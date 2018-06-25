@@ -26,3 +26,4 @@ RUN java -Djava.awt.headless=true -Xms4096m -Xmx4096m -jar AEM_6.2_Quickstart.ja
 
 # Install utility for AEM
 COPY ./base/aemInstaller.py /opt/aem/aemInstaller.py
+COPY ./base/helpers.py /opt/aem/helpers.py
