@@ -20,6 +20,7 @@ RUN ln -s /etc/httpd/modules/dispatcher-apache2.*.so /etc/httpd/modules/mod_disp
 # Add config files
 ADD ./httpd.conf /etc/httpd/conf/httpd.conf
 ADD ./aem-disp2.conf /etc/httpd/conf.d/aem-disp2.conf
+ADD ./proxy.conf /etc/httpd/conf.d/zzz-proxy.conf
 ADD ./dispatcher.any /etc/httpd/conf/dispatcher.any
 
 # Set permissions
