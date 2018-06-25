@@ -7,7 +7,7 @@ Getting started guide for development with [Adobe Experience Manager](https://ww
 This tutorial assumes running on a Mac. Installation on Windows might differ for certain steps. The following items are required:
 
 - [Docker](https://www.docker.com) with at least 8GB memory allocated
-- AEM installation file, named `AEM_6.2_Quickstart.jar`
+- AEM installation file, named `AEM_6.3_Quickstart.jar`
 - AEM license file, named `license.properties`
 - Recommended: [Homebrew](https://brew.sh) package manager
 
