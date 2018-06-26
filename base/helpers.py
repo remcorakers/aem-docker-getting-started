@@ -26,43 +26,65 @@ def log(message):
 
 def read_file_from_zip(zipfile_path, file_path):
   archive = zipfile.ZipFile(zipfile_path, 'r')
-  filedata = archive.read(file_path)
-  return filedata
+  file_data = archive.read(file_path)
+  return file_data
 
-def get_package_name_from_package_zip(zipfile):
-  propertiesData = read_file_from_zip(zipfile, 'META-INF/vault/properties.xml')
-  package_name = re.findall('<entry key="name">([^<]+)</entry>', propertiesData)[0]
+def get_package_name_from_package_zip(zip_file):
+  properties_data = read_file_from_zip(zip_file, 'META-INF/vault/properties.xml')
+  package_name = re.findall('<entry key="name">([^<]+)</entry>', properties_data)[0]
   return package_name
 
-def upload_package(baseUrl, credentials, file_path, file_name, package_name):
+def enable_asset_workflow(base_url, credentials):
+  log("Enabling asset workflow")
+  set_asset_workflow_status(base_url, credentials, True)
+  log("Asset workflow enabled")
+
+def disable_asset_workflow(base_url, credentials):
+  log("Disabling asset workflow")
+  set_asset_workflow_status(base_url, credentials, False)
+  log("Asset workflow disabled")
+
+def set_asset_workflow_status(base_url, credentials, status):
+  response = StringIO()
+  c = pycurl.Curl()
+  c.setopt(c.WRITEFUNCTION, response.write)
+  c.setopt(pycurl.USERPWD, credentials)
+  c.setopt(c.POSTFIELDS, 'enabled=' + ('true' if status == True else 'false'))
+  c.setopt(c.URL, base_url + "/etc/workflow/launcher/config/update_asset_create")
+  c.perform()
+  c.setopt(c.URL, base_url + "/etc/workflow/launcher/config/update_asset_mod")
+  c.perform()
+  c.close()
+
+def upload_package(base_url, credentials, file_path, file_name, package_name):
   log("Uploading package \"" + package_name + "\" (" + file_name + ")...")
   uploaded = False
   while not uploaded:
     try:
-      packageUpload = StringIO()
+      package_upload = StringIO()
       c = pycurl.Curl()
-      c.setopt(c.WRITEFUNCTION, packageUpload.write)
-      c.setopt(c.URL, baseUrl + "/crx/packmgr/service.jsp")
+      c.setopt(c.WRITEFUNCTION, package_upload.write)
+      c.setopt(c.URL, base_url + "/crx/packmgr/service.jsp")
       c.setopt(c.POST, 1)
       c.setopt(pycurl.USERPWD, credentials)
       c.setopt(c.HTTPPOST, [('file', (c.FORM_FILE, file_path)), ('force', 'true'), ('install', 'true')])
       c.perform()
       c.close()
-      packageUploadResponse = packageUpload.getvalue()
-      packageUpload.close()
+      package_upload_response = package_upload.getvalue()
+      package_upload.close()
     except pycurl.error:
       log("Uploading \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
       sleep(30)
       continue
 
-    if packageUploadResponse.find('<status code="200">ok</status>') == -1:
+    if package_upload_response.find('<status code="200">ok</status>') == -1:
       log("Uploading package \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
       sleep(30)
     else:
       log("Package \"" + package_name + "\" (" + file_name + ") uploaded")
       uploaded = True
 
-def wait_until_package_installed(baseUrl, credentials, package_name, file_name):
+def wait_until_package_installed(base_url, credentials, package_name, file_name):
   log("Checking package \"" + package_name + "\" (" + file_name + ") installation...")
 
   # Workaround for 6.2 SP1 to check installation status.
@@ -88,28 +110,28 @@ def wait_until_package_installed(baseUrl, credentials, package_name, file_name):
     installed = False
     while not installed:
       try:
-        packageInstallation = StringIO()
+        package_installation = StringIO()
         c = pycurl.Curl()
-        c.setopt(c.WRITEFUNCTION, packageInstallation.write)
-        c.setopt(c.URL, baseUrl + "/crx/packmgr/list.jsp")
+        c.setopt(c.WRITEFUNCTION, package_installation.write)
+        c.setopt(c.URL, base_url + "/crx/packmgr/list.jsp")
         c.setopt(pycurl.USERPWD, credentials)
         c.perform()
         c.close()
-        packageInstallationResponse = packageInstallation.getvalue()
-        packageInstallation.close()
+        package_installation_response = package_installation.getvalue()
+        package_installation.close()
       except pycurl.error:
         log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
         sleep(10)
         continue
     
-      if not is_json(packageInstallationResponse):
+      if not is_json(package_installation_response):
         log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
         sleep(10)
         continue
       
       # Parse packageInstallationResponse as json object and loop through results
-      jsonResponse = json.loads(packageInstallationResponse)
-      for result in jsonResponse["results"]:
+      json_response = json.loads(package_installation_response)
+      for result in json_response["results"]:
         # break while loop when package status is resolved (i.e. installed)
         if result["name"] == package_name and result["resolved"] == True:
           log("Package \"" + package_name + "\" (" + file_name + ") is installed")
@@ -120,11 +142,13 @@ def wait_until_package_installed(baseUrl, credentials, package_name, file_name):
         log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
         sleep(10)
 
-def import_packages(baseUrl, username='admin', password='admin', packageDir='packages'):
+def import_packages(base_url, username='admin', password='admin', packageDir='packages'):
   log("Start installing packages")
 
   credentials = username + ":" + password
   current_dir = os.getcwd()
+
+  disable_asset_workflow(base_url, credentials)
 
   for file_name in sorted(os.listdir(os.path.join(current_dir, packageDir))):
     if not file_name.endswith(".zip"): 
@@ -137,8 +161,11 @@ def import_packages(baseUrl, username='admin', password='admin', packageDir='pac
     package_name = get_package_name_from_package_zip(file_path)
     log("Found package name in zip file: " + package_name)
     
-    upload_package(baseUrl, credentials, file_path, file_name, package_name)
-    wait_until_package_installed(baseUrl, credentials, package_name, file_name)
+    upload_package(base_url, credentials, file_path, file_name, package_name)
+    wait_until_package_installed(base_url, credentials, package_name, file_name)
 
   log("Finished installing packages. Now wait for 5 minutes for all background processes to complete...")
   sleep(300)
+
+  enable_asset_workflow(base_url, credentials)
+

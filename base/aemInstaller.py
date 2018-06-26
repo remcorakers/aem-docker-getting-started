@@ -14,20 +14,20 @@ parser.add_option("-r", "--runmode", dest="runmode", help="Run mode for the inst
 parser.add_option("-p", "--port", dest="port", help="Port for instance")
 
 options, args = parser.parse_args()
-optDic = vars(options)
+option_dic = vars(options)
 
 # Copy out parameters
-print(optDic)
-print(optDic['filename'])
-fileName = optDic.setdefault('filename', 'cq-publish-4503.jar')
-runmode = optDic.setdefault('runmode', 'publish')
-port = optDic.setdefault('port', '4503')
+print(option_dic)
+print(option_dic['filename'])
+file_name = option_dic.setdefault('filename', 'cq-publish-4503.jar')
+runmode = option_dic.setdefault('runmode', 'publish')
+port = option_dic.setdefault('port', '4503')
 
 # Waits for connection on LISTENER_PORT, and then checks that the returned
 # success message has been recieved.
 LISTENER_PORT = 50007
-installProcess = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-Djava.awt.headless=true', 
-  '-jar', fileName, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port])
+install_process = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-Djava.awt.headless=true', 
+  '-jar', file_name, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port])
 
 # Starting listener
 import socket
@@ -37,25 +37,25 @@ s.bind((HOST, LISTENER_PORT))
 s.listen(1)
 conn, addr = s.accept()
 
-successfulStart = False
-strResult = ""
+successful_start = False
+str_result = ""
 while 1:
   data = conn.recv(1024)
   if not data:
     break
   else:
-    strResult = strResult + str(data).strip()
-    if strResult == 'started':
-      successfulStart = True
+    str_result = str_result + str(data).strip()
+    if str_result == 'started':
+      successful_start = True
       break
 conn.close()
 
 # Post install hook
-postInstallHook = "postInstallHook.py"
-if os.path.isfile(postInstallHook):
+post_install_hook = "postInstallHook.py"
+if os.path.isfile(post_install_hook):
   print("Executing post install hook")
-  returncode = subprocess.call(["python", postInstallHook])
-  print(returncode)
+  return_code = subprocess.call(["python", post_install_hook])
+  print(return_code)
   print("Sleeping for 3 seconds...")
   sleep(3)
 else:
@@ -64,14 +64,14 @@ else:
 print("Stopping instance")
 
 # If the success message was received, attempt to close all associated processes.
-if successfulStart == True:
-  parentAEMprocess= psutil.Process(installProcess.pid)
-  for childProcess in parentAEMprocess.get_children():
+if successful_start == True:
+  parent_aem_process= psutil.Process(install_process.pid)
+  for childProcess in parent_aem_process.get_children():
     os.kill(childProcess.pid,signal.SIGINT)
 
-  os.kill(parentAEMprocess.pid, signal.SIGINT)
-  installProcess.wait()
+  os.kill(parent_aem_process.pid, signal.SIGINT)
+  install_process.wait()
   sys.exit(0)
 else:
-  installProcess.kill()
+  install_process.kill()
   sys.exit(1)

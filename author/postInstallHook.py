@@ -6,14 +6,14 @@ from helpers import log, import_packages
 from urllib import urlencode, quote
 from StringIO import StringIO    
 
-baseUrl = "http://localhost:4502"
+base_url = "http://localhost:4502"
 password = "admin:admin"
 
 # Update Replication Agent
-agentStatus = StringIO()
+agent_status = StringIO()
 c = pycurl.Curl()
-c.setopt(c.WRITEFUNCTION, agentStatus.write)
-c.setopt(c.URL, baseUrl + "/etc/replication/agents.author/publish/jcr:content")
+c.setopt(c.WRITEFUNCTION, agent_status.write)
+c.setopt(c.URL, base_url + "/etc/replication/agents.author/publish/jcr:content")
 c.setopt(pycurl.USERPWD, password)
 post_data = {
   "./sling:resourceType":"cq/replication/components/agent",
@@ -70,12 +70,12 @@ postfields = urlencode(post_data)
 c.setopt(c.POSTFIELDS, postfields)
 c.perform()
 c.close()
-agentStatusResponse = agentStatus.getvalue()
-agentStatus.close()
+agent_status_response = agent_status.getvalue()
+agent_status.close()
 
-if agentStatusResponse.find('<div id="Status">200</div>') == -1:
+if agent_status_response.find('<div id="Status">200</div>') == -1:
   log("Updating replication agent failed:")
-  log(agentStatusResponse)
+  log(agent_status_response)
   log("Exiting process...")
   sys.exit(1)
 else:
@@ -83,14 +83,14 @@ else:
 
 # Showing Publisher status
 log("Publisher status:")
-publisherStatus = StringIO()
+publisher_status = StringIO()
 c = pycurl.Curl()
-c.setopt(c.WRITEFUNCTION, publisherStatus.write)
-c.setopt(c.URL, baseUrl + "/etc/replication/agents.author/publish/jcr:content.json")
+c.setopt(c.WRITEFUNCTION, publisher_status.write)
+c.setopt(c.URL, base_url + "/etc/replication/agents.author/publish/jcr:content.json")
 c.setopt(pycurl.USERPWD, password)
 c.perform()
 c.close()
-log(publisherStatus.getvalue())
+log(publisher_status.getvalue())
 
 # Install packages
-import_packages(baseUrl)
+import_packages(base_url)
