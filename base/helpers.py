@@ -51,13 +51,13 @@ def upload_package(baseUrl, credentials, file_path, file_name, package_name):
       packageUploadResponse = packageUpload.getvalue()
       packageUpload.close()
     except pycurl.error:
-      log("Uploading \"" + package_name + "\" (" + file_name + ") failed. Will retry in 10 seconds...")
-      sleep(10)
+      log("Uploading \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
+      sleep(30)
       continue
 
     if packageUploadResponse.find('<status code="200">ok</status>') == -1:
-      log("Uploading package \"" + package_name + "\" (" + file_name + ") failed. Will retry in 10 seconds...")
-      sleep(10)
+      log("Uploading package \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
+      sleep(30)
     else:
       log("Package \"" + package_name + "\" (" + file_name + ") uploaded")
       uploaded = True
