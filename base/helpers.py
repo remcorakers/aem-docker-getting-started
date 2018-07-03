@@ -29,10 +29,11 @@ def read_file_from_zip(zipfile_path, file_path):
   file_data = archive.read(file_path)
   return file_data
 
-def get_package_name_from_package_zip(zip_file):
+def get_package_name_and_version_from_package_zip(zip_file):
   properties_data = read_file_from_zip(zip_file, 'META-INF/vault/properties.xml')
   package_name = re.findall('<entry key="name">([^<]+)</entry>', properties_data)[0]
-  return package_name
+  package_version = re.findall('<entry key="version">([^<]+)</entry>', properties_data)[0]
+  return "%s-%s" % (package_name, package_version)
 
 def enable_asset_workflow(base_url, credentials):
   log("Enabling asset workflow")
@@ -158,8 +159,8 @@ def import_packages(base_url, username='admin', password='admin', packageDir='pa
     file_path = os.path.join(current_dir, packageDir, file_name)
     log("Starting installation of file \"" + file_name + "\"")
     
-    package_name = get_package_name_from_package_zip(file_path)
-    log("Found package name in zip file: " + package_name)
+    package_name = get_package_name_and_version_from_package_zip(file_path)
+    log("Found package name in zip file: \"%s\"" % package_name)
     
     upload_package(base_url, credentials, file_path, file_name, package_name)
     wait_until_package_installed(base_url, credentials, package_name, file_name)
