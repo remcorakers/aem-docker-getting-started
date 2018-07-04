@@ -3,6 +3,7 @@ import signal
 import os
 import sys
 import psutil
+from helpers import log
 from optparse import OptionParser
 from time import sleep
 
@@ -17,8 +18,8 @@ options, args = parser.parse_args()
 option_dic = vars(options)
 
 # Copy out parameters
-print(option_dic)
-print(option_dic['filename'])
+log(option_dic)
+log(option_dic['filename'])
 file_name = option_dic.setdefault('filename', 'cq-publish-4503.jar')
 runmode = option_dic.setdefault('runmode', 'publish')
 port = option_dic.setdefault('port', '4503')
@@ -53,15 +54,15 @@ conn.close()
 # Post install hook
 post_install_hook = "postInstallHook.py"
 if os.path.isfile(post_install_hook):
-  print("Executing post install hook")
+  log("Executing post install hook")
   return_code = subprocess.call(["python", post_install_hook])
-  print(return_code)
-  print("Sleeping for 3 seconds...")
+  log(return_code)
+  log("Sleeping for 3 seconds...")
   sleep(3)
 else:
-  print("No install hook found")
+  log("No install hook found")
 
-print("Stopping instance")
+log("Stopping instance")
 
 # If the success message was received, attempt to close all associated processes.
 if successful_start == True:

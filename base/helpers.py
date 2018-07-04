@@ -23,6 +23,7 @@ def get_formatted_time():
 
 def log(message):
   print("%s: %s" % (get_formatted_time(), message))
+  sys.stdout.flush()
 
 def read_file_from_zip(zipfile_path, file_path):
   archive = zipfile.ZipFile(zipfile_path, 'r')
@@ -59,10 +60,11 @@ def set_asset_workflow_status(base_url, credentials, status):
   c.perform()
   c.close()
 
-def upload_package(base_url, credentials, file_path, file_name, package_name):
-  log("Uploading package \"%s\" (%s)..." % (package_name, file_name))
+def upload_package(base_url, credentials, file_path, file_name, package_reference):
+  log("Uploading package \"%s\" (%s)..." % (package_reference, file_name))
   uploaded = False
   while not uploaded:
+    package_upload_response = ''
     try:
       package_upload = StringIO()
       c = pycurl.Curl()
@@ -76,25 +78,25 @@ def upload_package(base_url, credentials, file_path, file_name, package_name):
       package_upload_response = package_upload.getvalue()
       package_upload.close()
     except pycurl.error:
-      log("Uploading package \"%s\" (%s) failed. Will retry in 30 seconds..." % (package_name, file_name))
+      log("Uploading package \"%s\" (%s) failed. Will retry in 30 seconds..." % (package_reference, file_name))
       sleep(30)
       continue
 
     if package_upload_response.find('<status code="200">ok</status>') == -1:
-      log("Uploading package \"%s\" (%s) failed. Will retry in 30 seconds..." % (package_name, file_name))
+      log("Package \"%s\" (%s) uploaded" % (package_reference, file_name))
       uploaded = True
 
-def wait_until_package_installed(base_url, credentials, package_name, file_name):
-  log("Checking package \"%s\" (%s) installation..." % (package_name, file_name))
+def wait_until_package_installed(base_url, credentials, package_reference, file_name):
+  log("Checking package \"%s\" (%s) installation..." % (package_reference, file_name))
 
   # Workaround for 6.2 SP1 to check installation status.
   # See https://helpx.adobe.com/experience-manager/6-2/release-notes/sp1.html
-  if package_name.find('aem-service-pkg-6.2.SP1') > -1:
+  if package_reference.find('aem-service-pkg-6.2.SP1') > -1:
     log("Found 6.2 SP1 package. Monitor error.log to wait for package installation to complete...")
     match = 'from resource TaskResource(url=jcrinstall:/libs/system/aem-service-pkg-6.2.SP1/install/1/updater.aem-service-pkg-1.0.0.jar, ' \
             + 'entity=bundle:updater.aem-service-pkg, state=UNINSTALL, attributes=[Bundle-SymbolicName=updater.aem-service-pkg, Bundle-Version=1.0, ' \
             + 'org.apache.sling.installer.api.tasks.ResourceTransformer'
-    f = subprocess.Popen(['tail', '-F', '/opt/aem/crx-quickstart/logs/error.log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    f = subprocess.Popen(['tail', '-F', '-n', '1000', '/opt/aem/crx-quickstart/logs/error.log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p = select.poll()
     p.register(f.stdout)
 
@@ -102,13 +104,14 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
       if p.poll(1):
         if f.stdout.readline().find(match) > -1:
           f.kill()
-          log("Package \"%s\" (%s) is installed" % (package_name, file_name))
+          log("Package \"%s\" (%s) is installed" % (package_reference, file_name))
           break
       sleep(1)
     
   else:
     installed = False
     while not installed:
+      package_installation_response = ''
       try:
         package_installation = StringIO()
         c = pycurl.Curl()
@@ -120,12 +123,12 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
         package_installation_response = package_installation.getvalue()
         package_installation.close()
       except pycurl.error:
-        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_reference, file_name))
         sleep(10)
         continue
     
       if not is_json(package_installation_response):
-        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_reference, file_name))
         sleep(10)
         continue
       
@@ -133,14 +136,14 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
       json_response = json.loads(package_installation_response)
       for result in json_response["results"]:
         # break while loop when package status is resolved (i.e. installed)
-        package_name_response = "%s-%s" % (result["name"], result["version"])
-        if package_name_response == package_name and result["resolved"] == True:
-          log("Package \"%s\" (%s) is installed" % (package_name, file_name))
+        package_reference_response = "%s-%s" % (result["name"], result["version"]) if len(result["version"]) > 0 else result["name"]
+        if package_reference_response == package_reference and result["resolved"] == True:
+          log("Package \"%s\" (%s) is installed" % (package_reference, file_name))
           installed = True
           break
 
       if not installed:
-        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_reference, file_name))
         sleep(10)
 
 def import_packages(base_url, username='admin', password='admin', packageDir='packages'):
@@ -159,11 +162,11 @@ def import_packages(base_url, username='admin', password='admin', packageDir='pa
     file_path = os.path.join(current_dir, packageDir, file_name)
     log("Starting installation of file \"%s\"" % file_name)
     
-    package_name = get_package_name_and_version_from_package_zip(file_path)
-    log("Found package name in zip file: \"%s\"" % package_name)
+    package_reference = get_package_name_and_version_from_package_zip(file_path)
+    log("Found package name and version in zip file: \"%s\"" % package_reference)
     
-    upload_package(base_url, credentials, file_path, file_name, package_name)
-    wait_until_package_installed(base_url, credentials, package_name, file_name)
+    upload_package(base_url, credentials, file_path, file_name, package_reference)
+    wait_until_package_installed(base_url, credentials, package_reference, file_name)
 
   log("Finished installing packages. Now wait for 5 minutes for all background processes to complete...")
   sleep(300)
