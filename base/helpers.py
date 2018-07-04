@@ -22,7 +22,7 @@ def get_formatted_time():
   return time.strftime("%Y-%m-%d %H:%M:%S")
 
 def log(message):
-  print(get_formatted_time() + ": " + message)
+  print("%s: %s" % (get_formatted_time(), message))
 
 def read_file_from_zip(zipfile_path, file_path):
   archive = zipfile.ZipFile(zipfile_path, 'r')
@@ -32,8 +32,10 @@ def read_file_from_zip(zipfile_path, file_path):
 def get_package_name_and_version_from_package_zip(zip_file):
   properties_data = read_file_from_zip(zip_file, 'META-INF/vault/properties.xml')
   package_name = re.findall('<entry key="name">([^<]+)</entry>', properties_data)[0]
-  package_version = re.findall('<entry key="version">([^<]+)</entry>', properties_data)[0]
-  return "%s-%s" % (package_name, package_version)
+  package_version = re.findall('<entry key="version">([^<]+)</entry>', properties_data)
+  if(len(package_version) > 0):
+    return "%s-%s" % (package_name, package_version[0])
+  return package_name
 
 def enable_asset_workflow(base_url, credentials):
   log("Enabling asset workflow")
@@ -58,7 +60,7 @@ def set_asset_workflow_status(base_url, credentials, status):
   c.close()
 
 def upload_package(base_url, credentials, file_path, file_name, package_name):
-  log("Uploading package \"" + package_name + "\" (" + file_name + ")...")
+  log("Uploading package \"%s\" (%s)..." % (package_name, file_name))
   uploaded = False
   while not uploaded:
     try:
@@ -74,19 +76,16 @@ def upload_package(base_url, credentials, file_path, file_name, package_name):
       package_upload_response = package_upload.getvalue()
       package_upload.close()
     except pycurl.error:
-      log("Uploading \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
+      log("Uploading package \"%s\" (%s) failed. Will retry in 30 seconds..." % (package_name, file_name))
       sleep(30)
       continue
 
     if package_upload_response.find('<status code="200">ok</status>') == -1:
-      log("Uploading package \"" + package_name + "\" (" + file_name + ") failed. Will retry in 30 seconds...")
-      sleep(30)
-    else:
-      log("Package \"" + package_name + "\" (" + file_name + ") uploaded")
+      log("Uploading package \"%s\" (%s) failed. Will retry in 30 seconds..." % (package_name, file_name))
       uploaded = True
 
 def wait_until_package_installed(base_url, credentials, package_name, file_name):
-  log("Checking package \"" + package_name + "\" (" + file_name + ") installation...")
+  log("Checking package \"%s\" (%s) installation..." % (package_name, file_name))
 
   # Workaround for 6.2 SP1 to check installation status.
   # See https://helpx.adobe.com/experience-manager/6-2/release-notes/sp1.html
@@ -103,7 +102,7 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
       if p.poll(1):
         if f.stdout.readline().find(match) > -1:
           f.kill()
-          log("Package \"" + package_name + "\" (" + file_name + ") is installed")
+          log("Package \"%s\" (%s) is installed" % (package_name, file_name))
           break
       sleep(1)
     
@@ -121,12 +120,12 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
         package_installation_response = package_installation.getvalue()
         package_installation.close()
       except pycurl.error:
-        log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
         sleep(10)
         continue
     
       if not is_json(package_installation_response):
-        log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
         sleep(10)
         continue
       
@@ -134,30 +133,31 @@ def wait_until_package_installed(base_url, credentials, package_name, file_name)
       json_response = json.loads(package_installation_response)
       for result in json_response["results"]:
         # break while loop when package status is resolved (i.e. installed)
-        if result["name"] == package_name and result["resolved"] == True:
-          log("Package \"" + package_name + "\" (" + file_name + ") is installed")
+        package_name_response = "%s-%s" % (result["name"], result["version"])
+        if package_name_response == package_name and result["resolved"] == True:
+          log("Package \"%s\" (%s) is installed" % (package_name, file_name))
           installed = True
           break
 
       if not installed:
-        log("Package \"" + package_name + "\" (" + file_name + ") not yet installed. Will retry in 10 seconds...")
+        log("Package \"%s\" (%s) not yet installed. Will retry in 10 seconds..." % (package_name, file_name))
         sleep(10)
 
 def import_packages(base_url, username='admin', password='admin', packageDir='packages'):
   log("Start installing packages")
 
-  credentials = username + ":" + password
+  credentials = "%s:%s" % (username, password)
   current_dir = os.getcwd()
 
   disable_asset_workflow(base_url, credentials)
 
   for file_name in sorted(os.listdir(os.path.join(current_dir, packageDir))):
     if not file_name.endswith(".zip"): 
-      log("File \"" + file_name + "\" is no zip-file")
+      log("File \"%s\" is no zip-file" % file_name)
       continue
 
     file_path = os.path.join(current_dir, packageDir, file_name)
-    log("Starting installation of file \"" + file_name + "\"")
+    log("Starting installation of file \"%s\"" % file_name)
     
     package_name = get_package_name_and_version_from_package_zip(file_path)
     log("Found package name in zip file: \"%s\"" % package_name)
