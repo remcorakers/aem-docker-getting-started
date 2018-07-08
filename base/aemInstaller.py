@@ -28,7 +28,7 @@ port = option_dic.setdefault('port', '4503')
 # success message has been recieved.
 LISTENER_PORT = 50007
 install_process = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-Djava.awt.headless=true', 
-  '-jar', file_name, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port])
+  '-jar', file_name, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port, '-nofork'])
 
 # Starting listener
 import socket

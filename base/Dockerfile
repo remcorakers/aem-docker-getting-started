@@ -1,6 +1,8 @@
 FROM centos:7
 
 # Install packages
+# ld-linux.so.2, glibc.i686 and libuuid.i686 are added to enable XMP extraction and write-back on 64-bit RedHat Linux
+# See https://helpx.adobe.com/experience-manager/kb/enable-xmp-write-back-64-bit-redhat.html.
 RUN yum -y install epel-release && yum clean all
 RUN yum -y --enablerepo=centosplus update \
     && yum install -y \
@@ -13,6 +15,9 @@ RUN yum -y --enablerepo=centosplus update \
       python-pip \
       python-psutil \
       python-pycurl \
+      ld-linux.so.2 \
+      glibc.i686 \
+      libuuid.i686 \
     && yum clean all \
     && rm -rf /var/cache/yum
 

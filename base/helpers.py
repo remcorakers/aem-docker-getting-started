@@ -82,7 +82,7 @@ def upload_package(base_url, credentials, file_path, file_name, package_referenc
       sleep(30)
       continue
 
-    if package_upload_response.find('<status code="200">ok</status>') == -1:
+    if package_upload_response.find('<status code="200">ok</status>') > -1:
       log("Package \"%s\" (%s) uploaded" % (package_reference, file_name))
       uploaded = True
 
@@ -96,12 +96,12 @@ def wait_until_package_installed(base_url, credentials, package_reference, file_
     match = 'from resource TaskResource(url=jcrinstall:/libs/system/aem-service-pkg-6.2.SP1/install/1/updater.aem-service-pkg-1.0.0.jar, ' \
             + 'entity=bundle:updater.aem-service-pkg, state=UNINSTALL, attributes=[Bundle-SymbolicName=updater.aem-service-pkg, Bundle-Version=1.0, ' \
             + 'org.apache.sling.installer.api.tasks.ResourceTransformer'
-    f = subprocess.Popen(['tail', '-F', '-n', '1000', '/opt/aem/crx-quickstart/logs/error.log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    f = subprocess.Popen(['tail', '-F', '/opt/aem/crx-quickstart/logs/error.log'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p = select.poll()
     p.register(f.stdout)
 
     while True:
-      if p.poll(1):
+      if p.poll(1000):
         if f.stdout.readline().find(match) > -1:
           f.kill()
           log("Package \"%s\" (%s) is installed" % (package_reference, file_name))
