@@ -24,11 +24,12 @@ RUN yum -y --enablerepo=centosplus update \
 # Copy required build media
 COPY ./AEM_6.*_Quickstart.jar /opt/aem/AEM_6.x_Quickstart.jar
 COPY ./license.properties /opt/aem/license.properties
+COPY ./oak-run-*.jar /opt/aem/oak-run.jar
 
 # Extract AEM
 WORKDIR /opt/aem
-RUN java -Djava.awt.headless=true -Xms4096m -Xmx4096m -jar AEM_6.x_Quickstart.jar -unpack
+RUN java -Djava.awt.headless=true -Xms8g -Xmx8g -jar AEM_6.x_Quickstart.jar -unpack
 
 # Install utility for AEM
-COPY ./base/aemInstaller.py /opt/aem/aemInstaller.py
+COPY ./base/aem_installer.py /opt/aem/aem_installer.py
 COPY ./base/helpers.py /opt/aem/helpers.py

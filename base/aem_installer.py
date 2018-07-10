@@ -3,7 +3,7 @@ import signal
 import os
 import sys
 import psutil
-from helpers import log
+from helpers import log, run_compaction
 from optparse import OptionParser
 from time import sleep
 
@@ -27,7 +27,7 @@ port = option_dic.setdefault('port', '4503')
 # Waits for connection on LISTENER_PORT, and then checks that the returned
 # success message has been recieved.
 LISTENER_PORT = 50007
-install_process = subprocess.Popen(['java', '-Xms4096m', '-Xmx4096m', '-Djava.awt.headless=true', 
+install_process = subprocess.Popen(['java', '-Xms8g', '-Xmx8g', '-Djava.awt.headless=true', 
   '-jar', file_name, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port, '-nofork'])
 
 # Starting listener
@@ -52,11 +52,11 @@ while 1:
 conn.close()
 
 # Post install hook
-post_install_hook = "postInstallHook.py"
+post_install_hook = "post_install_hook.py"
 if os.path.isfile(post_install_hook):
   log("Executing post install hook")
   return_code = subprocess.call(["python", post_install_hook])
-  log(return_code)
+  log("Return code of process: %s" % return_code)
   log("Sleeping for 3 seconds...")
   sleep(3)
 else:
@@ -72,6 +72,10 @@ if successful_start == True:
 
   os.kill(parent_aem_process.pid, signal.SIGINT)
   install_process.wait()
+
+  # Run compaction
+  run_compaction('/opt/aem/oak-run.jar', '/opt/aem/crx-quickstart')
+
   sys.exit(0)
 else:
   install_process.kill()

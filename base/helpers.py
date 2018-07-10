@@ -168,8 +168,22 @@ def import_packages(base_url, username='admin', password='admin', packageDir='pa
     upload_package(base_url, credentials, file_path, file_name, package_reference)
     wait_until_package_installed(base_url, credentials, package_reference, file_name)
 
-  log("Finished installing packages. Now wait for 5 minutes for all background processes to complete...")
-  sleep(300)
-
+  log("Finished installing packages.")
   enable_asset_workflow(base_url, credentials)
 
+def run_compaction(oak_path, aem_quickstart_folder):
+  log('Start AEM compaction')
+
+  log('Finding old AEM checkpoints...')
+  return_code = subprocess.call(['java', '-Dtar.memoryMapped=true', '-Xms8g', '-Xmx8g', '-jar', oak_path, 'checkpoints', aem_quickstart_folder + '/repository/segmentstore'])
+  log('Return code of process: %s' % return_code)
+
+  log('Deleting unreferenced AEM checkpoints...')
+  return_code = subprocess.call(['java', '-Dtar.memoryMapped=true', '-Xms8g', '-Xmx8g', '-jar', oak_path, 'checkpoints', aem_quickstart_folder + '/repository/segmentstore', 'rm-unreferenced'])
+  log('Return code of process: %s' % return_code)
+
+  log('Running AEM compaction. This may take a while...')
+  return_code = subprocess.call(['java', '-Dtar.memoryMapped=true', '-Xms8g', '-Xmx8g', '-jar', oak_path, 'compact', aem_quickstart_folder + '/repository/segmentstore'])
+  log('Return code of process: %s' % return_code)
+
+  log('AEM compaction complete')

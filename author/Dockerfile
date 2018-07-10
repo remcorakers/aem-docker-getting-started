@@ -2,10 +2,10 @@ FROM aem-base
 
 WORKDIR /opt/aem
 
-COPY ./author/postInstallHook.py /opt/aem/postInstallHook.py
+COPY ./author/post_install_hook.py /opt/aem/post_install_hook.py
 COPY ./author/packages/* /opt/aem/packages/
 
-RUN python aemInstaller.py -i AEM_6.x_Quickstart.jar -r author,nosamplecontent -p 4502
+RUN python aem_installer.py -i AEM_6.x_Quickstart.jar -r author,nosamplecontent -p 4502
 
 EXPOSE 4502
-CMD java -Xms4096m -Xmx4096m -Djava.awt.headless=true -jar AEM_6.x_Quickstart.jar -p 4502 -debug 30303 -r author,nosamplecontent -v -nofork
+CMD java -Xms4g -Xmx4g -Djava.awt.headless=true -jar AEM_6.x_Quickstart.jar -p 4502 -debug 30303 -r author,nosamplecontent -v -nofork
