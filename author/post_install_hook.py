@@ -2,7 +2,7 @@ import pycurl
 import os
 import sys
 import subprocess
-from helpers import log, import_packages
+from helpers import log, import_packages, remove_package_installation_files
 from urllib import urlencode, quote
 from StringIO import StringIO    
 
@@ -94,3 +94,4 @@ log(publisher_status.getvalue())
 
 # Install packages
 import_packages(base_url)
+remove_package_installation_files()
