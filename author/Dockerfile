@@ -2,7 +2,6 @@ FROM aem-base
 
 WORKDIR /opt/aem
 
-COPY ./author/post_install_hook.py /opt/aem/post_install_hook.py
 COPY ./author/packages/* /opt/aem/packages/
 
 RUN python aem_installer.py -i AEM_6.x_Quickstart.jar -r author,nosamplecontent -p 4502
