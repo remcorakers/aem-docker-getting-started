@@ -127,9 +127,9 @@ def wait_until_package_installed(base_url, credentials, package_reference):
       # Parse packageInstallationResponse as json object and loop through results
       json_response = json.loads(package_installation_response)
       for result in json_response["results"]:
-        # break while loop when package status is resolved (i.e. installed)
+        # break while loop when package is unpacked (i.e. installed)
         package_reference_response = "%s-%s" % (result["name"], result["version"]) if len(result["version"]) > 0 else result["name"]
-        if package_reference_response.lower() == package_reference.lower() and result["resolved"] == True:
+        if package_reference_response.lower() == package_reference.lower() and 'lastUnpackedBy' in result:
           log("Package \"%s\" is installed" % (package_reference))
           installed = True
           break
@@ -166,13 +166,11 @@ def import_packages(aem_jar_file_name, port, runmode, username='admin', password
     package_reference = get_package_name_and_version_from_package_zip(file_path)
     log("Found package name and version in zip file: \"%s\"" % package_reference)
     
-    restart_required = package_requires_restart(file_path)
     upload_package(base_url, credentials, file_path, package_file_name, package_reference)
     wait_until_package_installed(base_url, credentials, package_reference)
 
-    if restart_required:
-      log("Package requires restart of AEM")
-      server_process_id = restart_aem_server(server_process_id, aem_jar_file_name, port, runmode)
+    # Always restart AEM after every package install
+    server_process_id = restart_aem_server(server_process_id, aem_jar_file_name, port, runmode)
 
   log("Finished installing packages.")
   
