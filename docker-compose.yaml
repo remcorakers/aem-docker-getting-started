@@ -8,6 +8,7 @@ services:
     hostname: 'author'
     ports:
       - '4502:4502'
+      - '30303:30303'
     volumes:
       - ./logs/author:/opt/aem/crx-quickstart/logs
     depends_on:
@@ -20,6 +21,7 @@ services:
     hostname: 'publisher'
     ports:
       - '4503:4503'
+      - '30304:30304'
     volumes:
       - ./logs/publisher:/opt/aem/crx-quickstart/logs
   dispatcher:
