@@ -12,7 +12,7 @@ import subprocess
 import select
 import shutil
 from urllib import urlencode, quote
-from StringIO import StringIO    
+from StringIO import StringIO
 from time import sleep
 
 def is_json(myjson):
@@ -77,7 +77,7 @@ def upload_package(base_url, credentials, file_path, file_name, package_referenc
 
   if not os.path.exists(install_dir):
     os.makedirs(install_dir)
-  
+
   os.rename(file_path, os.path.join(install_dir, file_name))
   log("Package \"%s\" (%s) moved to %s" % (package_reference, file_name, install_dir))
 
@@ -99,7 +99,7 @@ def wait_until_package_installed(base_url, credentials, package_reference):
           f.kill()
           log("Package \"%s\" is installed" % (package_reference))
           break
-    
+
   else:
     installed = False
     while not installed:
@@ -118,12 +118,12 @@ def wait_until_package_installed(base_url, credentials, package_reference):
         log("Package \"%s\" not yet installed. Curl error: %s. Will retry in 10 seconds..." % (package_reference, error))
         sleep(10)
         continue
-    
+
       if not is_json(package_installation_response):
         log("Package \"%s\" not yet installed. Package installation check response: %s. Will retry in 10 seconds..." % (package_reference, package_installation_response))
         sleep(10)
         continue
-      
+
       # Parse packageInstallationResponse as json object and loop through results
       json_response = json.loads(package_installation_response)
       for result in json_response["results"]:
@@ -156,16 +156,16 @@ def import_packages(aem_jar_file_name, port, runmode, username='admin', password
   disable_asset_workflow(base_url, credentials)
 
   for package_file_name in sorted(os.listdir(os.path.join(current_dir, package_dir))):
-    if not package_file_name.endswith(".zip"): 
+    if not package_file_name.endswith(".zip"):
       log("File \"%s\" is no zip-file" % package_file_name)
       continue
 
     file_path = os.path.join(current_dir, package_dir, package_file_name)
     log("Starting installation of file \"%s\"" % package_file_name)
-    
+
     package_reference = get_package_name_and_version_from_package_zip(file_path)
     log("Found package name and version in zip file: \"%s\"" % package_reference)
-    
+
     upload_package(base_url, credentials, file_path, package_file_name, package_reference)
     wait_until_package_installed(base_url, credentials, package_reference)
 
@@ -173,7 +173,7 @@ def import_packages(aem_jar_file_name, port, runmode, username='admin', password
     server_process_id = restart_aem_server(server_process_id, aem_jar_file_name, port, runmode)
 
   log("Finished installing packages.")
-  
+
   log("Start system clean-up...")
   enable_asset_workflow(base_url, credentials)
   stop_aem_server(server_process_id)
@@ -203,12 +203,13 @@ def start_aem_server(aem_jar_file_name, port, runmode):
   # Waits for connection on LISTENER_PORT, and then checks that the returned
   # success message has been received.
   LISTENER_PORT = 50007
-  install_process = subprocess.Popen(['java', '-Xms8g', '-Xmx8g', '-Djava.awt.headless=true', 
+  install_process = subprocess.Popen(['java', '-Xms8g', '-Xmx8g', '-Djava.awt.headless=true',
     '-jar', aem_jar_file_name, '-listener-port', str(LISTENER_PORT), '-r', runmode, '-p', port, '-nofork'])
 
   # Starting listener
   HOST = ''
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
   attempts = 0
   while True:
     attempts = attempts + 1
@@ -240,6 +241,7 @@ def start_aem_server(aem_jar_file_name, port, runmode):
         break
 
   conn.close()
+  s.close()
   return install_process.pid
 
 def stop_aem_server(process_id):
