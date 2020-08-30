@@ -2,14 +2,15 @@ FROM centos:7
 
 # Install Apache
 RUN yum install -y --enablerepo=centosplus \
-      tar \
-      wget \
-      libselinux-devel \
-      httpd-2.4.6 \
-    && yum clean all
+  tar \
+  wget \
+  libselinux-devel \
+  httpd-2.4.6 \
+  && yum clean all
 
 # Download the dispatcher
-RUN wget https://www.adobeaemcloud.com/content/companies/public/adobe/dispatcher/dispatcher/_jcr_content/top/download_9/file.res/dispatcher-apache2.4-linux-x86-64-ssl-4.2.3.tar.gz
+RUN wget https://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-ssl1.0-4.3.3.tar.gz
+
 RUN mkdir -p dispatcher
 RUN tar -C dispatcher -zxvf dispatcher-apache2.*.tar.gz
 
