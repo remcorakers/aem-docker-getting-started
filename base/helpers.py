@@ -247,8 +247,8 @@ def start_aem_server(aem_jar_file_name, port, runmode):
 def stop_aem_server(process_id):
   log("Stopping AEM...")
 
-  parent_aem_process= psutil.Process(process_id)
-  for childProcess in parent_aem_process.get_children():
+  parent_aem_process = psutil.Process(process_id)
+  for childProcess in parent_aem_process.children():
     os.kill(childProcess.pid,signal.SIGINT)
 
   os.kill(parent_aem_process.pid, signal.SIGINT)
